@@ -1,6 +1,5 @@
 #include "freelist.h"
 
-
 FreeList freelist_of(u32 size) {
     FreeList f = {
         .size = size,
@@ -13,6 +12,7 @@ FreeList freelist_of(u32 size) {
 }
 void freelist_delete(FreeList* f) {
     free(f->_data);
+    f->_data = nullptr;
 }
 void freelist_reset(FreeList* f) {
     f->numUsed = 0;

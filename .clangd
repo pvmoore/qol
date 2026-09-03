@@ -8,7 +8,7 @@ CompileFlags:
     - -std=c2y    # https://clang.llvm.org/c_status.html
     - -Wall
     - -Wextra
-    - -Wno-#warnings,no-typecheck_assign_const
+    - -Wno-#warnings
     - -Isrc
     - -I..\src
   BuiltinHeaders: QueryDriver

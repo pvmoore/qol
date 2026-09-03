@@ -40,7 +40,7 @@ void benchmarkString(Arena* arena) {
     const u32 HLEN = 1024*1024;
     const u32 NLEN = 10;
 
-    char* buffer = (char*)arena_alloc(arena, HLEN);
+    char* buffer = (char*)arena_alloc(arena, HLEN, 1);
     for(u32 i=0; i<HLEN; i++) buffer[i] = randomChar();
     buffer[HLEN-1] = '\0';
 

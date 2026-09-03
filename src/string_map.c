@@ -1,20 +1,33 @@
 #include "string_map.h"
 
+typedef struct {
+    u32 capacity;
+    u32 numKeys;                // Current number of populated keys in the map
+    u32 mask;                   // capacity - 1
+    u32 numKeysThreshold;       // numKeys value which will trigger a rehash
+    float loadFactor;
 
-//---------------------------------------------------------------------------------- private
+    string* keys;               // (length = capacity)
+    u32* flags;                 // Bit flags for key slots. 1 = occupied, 0 = free
+    string* values;             // (length = capacity)
+} string_map_impl;
 
-u32 getSlot(string_map* m, string key);
-u32 nextSlot(string_map* m, u32 slot);
-bool isOccupied(string_map* m, u32 slot);
-void setOccupied(string_map* m, u32 slot);
-void setFree(string_map* m, u32 slot);
-i32 findSlotForKey(string_map* m, string key);
-void setKeyValue(string_map* m, u32 slot, string key, string value);
-u32 calculateLoadFactorThreshold(u32 capacity, float loadFactor);
-void expand(string_map* m);
+u32     getSlot                     (string_map_impl* m, string key);
+u32     nextSlot                    (string_map_impl* m, u32 slot);
+bool    isOccupied                  (string_map_impl* m, u32 slot);
+void    setOccupied                 (string_map_impl* m, u32 slot);
+void    setFree                     (string_map_impl* m, u32 slot);
+i32     findSlotForKey              (string_map_impl* m, string key);
+void    setKeyValue                 (string_map_impl* m, u32 slot, string key, string value);
+void    expand                      (string_map_impl* m);
+u32     calculateLoadFactorThreshold(u32 capacity, float loadFactor);
+
+string_map_impl* toImpl(string_map* m) {
+    return (string_map_impl*)m;
+}
 
 /** Allocate memory */
-void alloc(string_map* m) {
+void alloc(string_map_impl* m) {
     if(!m->keys) {
         m->keys = (string*)calloc(m->capacity, sizeof(string));
         m->flags = (u32*)calloc(m->capacity / 32 + 1, sizeof(u32));
@@ -22,14 +35,16 @@ void alloc(string_map* m) {
     }
 }
 
-string_map string_map_of(u32 capacity, float loadFactor) {
+string_map* string_map_of(Arena* arena, u32 capacity, float loadFactor) {
 
     assert(popcnt(capacity) == 1 && "capacity must be a power of 2");
     assert(loadFactor > 0 && "loadFactor must be > 0");
     assert(loadFactor < 1 && "loadFactor must be < 1");
 
     // Zero initialise the map. Allocate memory later if/when a key is added
-    string_map m = {
+    string_map_impl* m = arena_alloc(arena, sizeof(string_map_impl), 8);
+
+    *m = (string_map_impl) {
         .capacity = capacity,
         .loadFactor = loadFactor,
         .numKeys = 0,
@@ -39,18 +54,28 @@ string_map string_map_of(u32 capacity, float loadFactor) {
         .flags = nullptr,
         .values = nullptr
     };
-    return m;
+
+    return (string_map*)m;
 }
 
 bool string_map_is_empty(string_map* m) {
-    return m->numKeys == 0;
+    return ((string_map_impl*)m)->numKeys == 0;
 }
 
 u32 string_map_size(string_map* m) {
-    return m->numKeys;
+    return ((string_map_impl*)m)->numKeys;
 }
 
-void string_map_dump(string_map* m) {
+u32 string_map_capacity(string_map* m) {
+    return ((string_map_impl*)m)->capacity;
+}
+
+float string_map_load_factor(string_map *m) {
+    return ((string_map_impl*)m)->loadFactor;
+}
+
+void string_map_dump(string_map* map) {
+    string_map_impl* m = toImpl(map);
     printf("string_map {\n");
     for(u32 slot = 0; slot < m->capacity; slot++) {
         if(m->keys && isOccupied(m, slot)) {
@@ -63,7 +88,7 @@ void string_map_dump(string_map* m) {
         }
     }
     printf("   size = %u/%u, load = %.2f, threshold = %u\n",
-        string_map_size(m),
+        m->numKeys,
         m->capacity,
         (float)m->numKeys / m->capacity,
         m->numKeysThreshold);
@@ -73,7 +98,8 @@ void string_map_dump(string_map* m) {
 /**
  * Add or replace a Key,Value in the map
  */
-void string_map_insert(string_map* m, string key, string value) {
+void string_map_insert(string_map* map, string key, string value) {
+    string_map_impl* m = toImpl(map);
     alloc(m);
     u32 slot = getSlot(m, key);
 
@@ -101,7 +127,8 @@ void string_map_insert(string_map* m, string key, string value) {
 /**
  * Get a value from the map. Return nullptr if not found
  */
-string* string_map_get(string_map* m, string key) {
+string* string_map_get(string_map* map, string key) {
+    string_map_impl* m = toImpl(map);
     i32 slot = findSlotForKey(m, key);
     if(slot != -1) {
         return &m->values[slot];
@@ -109,14 +136,15 @@ string* string_map_get(string_map* m, string key) {
     return nullptr;
 }
 
-bool string_map_contains_key(string_map* m, string key) {
-    return findSlotForKey(m, key) != -1;
+bool string_map_contains_key(string_map* map, string key) {
+    return findSlotForKey(toImpl(map), key) != -1;
 }
 
 /**
  * Remove a key from the map. Returns true if the key was found and removed
  */
-bool string_map_remove(string_map* m, string key) {
+bool string_map_remove(string_map* map, string key) {
+    string_map_impl* m = toImpl(map);
     i32 foundSlot = findSlotForKey(m, key);
     if(foundSlot == -1) {
         // Key not found
@@ -163,7 +191,8 @@ bool string_map_remove(string_map* m, string key) {
     return true;
 }
 
-void string_map_clear(string_map* m, bool freeMemory) {
+void string_map_clear(string_map* map, bool freeMemory) {
+    string_map_impl* m = toImpl(map);
     if(freeMemory) {
         free(m->keys);
         free(m->flags);
@@ -179,8 +208,10 @@ void string_map_clear(string_map* m, bool freeMemory) {
     m->numKeys = 0;
 }
 
-u32 string_map_keys(string_map* m, string* keysOut) {
-    assert(keysOut);
+u32 string_map_keys(string_map* map, string* keysOut) {
+    string_map_impl* m = toImpl(map);
+    assert(m->numKeys == 0 || keysOut);
+
     u32 count = 0;
     for(u32 i = 0; i < m->capacity; i++) {
         if(isOccupied(m, i)) {
@@ -190,8 +221,10 @@ u32 string_map_keys(string_map* m, string* keysOut) {
     return count;
 }
 
-u32 string_map_values(string_map* m, string* valuesOut) {
-    assert(valuesOut);
+u32 string_map_values(string_map* map, string* valuesOut) {
+    string_map_impl* m = toImpl(map);
+    assert(m->numKeys == 0 || valuesOut);
+
     u32 count = 0;
     for(u32 i = 0; i < m->capacity; i++) {
         if(isOccupied(m, i)) {
@@ -210,34 +243,34 @@ u32 djb2_hash(string s) {
     return hash;
 }
 
-u32 getSlot(string_map* m, string key) {
+u32 getSlot(string_map_impl* m, string key) {
     return (djb2_hash(key) & m->mask);
 }
 
 /** Get the next slot, wrapping around if necessary */
-u32 nextSlot(string_map* m, u32 slot) {
+u32 nextSlot(string_map_impl* m, u32 slot) {
     return (slot+1) & m->mask;
 }
 
-bool isOccupied(string_map* m, u32 slot) {
+bool isOccupied(string_map_impl* m, u32 slot) {
     assert(m->flags);
     u32 u = slot >> 5;
     u32 r = slot & 31;
     return ((m->flags[u] >> r) & 1) == 1;
 }
-void setOccupied(string_map* m, u32 slot) {
+void setOccupied(string_map_impl* m, u32 slot) {
     assert(m->flags);
     u32 u = slot >> 5;
     u32 r = slot & 31;
     m->flags[u] |= (1 << r);
 }
-void setFree(string_map* m, u32 slot) {
+void setFree(string_map_impl* m, u32 slot) {
     assert(m->flags);
     u32 u = slot >> 5;
     u32 r = slot & 31;
     m->flags[u] &= ~(1 << r);
 }
-void setKeyValue(string_map* m, u32 slot, string key, string value) {
+void setKeyValue(string_map_impl* m, u32 slot, string key, string value) {
     assert(!isOccupied(m, slot));
 
     m->keys[slot] = key;
@@ -253,7 +286,7 @@ void setKeyValue(string_map* m, u32 slot, string key, string value) {
  * Find the slot for a given key
  * Returns -1 if not found
  */
-i32 findSlotForKey(string_map* m, string key) {
+i32 findSlotForKey(string_map_impl* m, string key) {
     u32 slot = getSlot(m, key);
 
     // Use equality to check each slot until we find the key or an unoccupied slot
@@ -278,7 +311,7 @@ u32 calculateLoadFactorThreshold(u32 capacity, float loadFactor) {
 /**
  * Double the capacity of the map.
  */
-void expand(string_map* m) {
+void expand(string_map_impl* m) {
     string* oldKeys     = m->keys;
     u32* oldFlags       = m->flags;
     string* oldValues   = m->values;

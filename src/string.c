@@ -14,7 +14,7 @@ string string_of_fmt(Arena* arena, const char* fmt, ...) {
     va_list	ap;
     va_start(ap, fmt);
     int count = vscprintf(fmt, ap) + 1;
-    char* buffer = (char*)arena_alloc(arena, count);
+    char* buffer = (char*)arena_alloc(arena, count, 1);
     vsnprintf(buffer, count, fmt, ap);
     va_end(ap);
     return string_of(buffer);
@@ -22,7 +22,7 @@ string string_of_fmt(Arena* arena, const char* fmt, ...) {
 
 /** Returns a string that wraps a char */
 string string_of_char(char ch, Arena* arena) {
-    char* buffer = arena_alloc(arena, 1);
+    char* buffer = arena_alloc(arena, 1, 1);
     buffer[0] = ch;
     return (string){ .buffer = buffer, .length = 1 };
 }
@@ -36,7 +36,7 @@ const char* cstr_of(string s, Arena* arena) {
     assert(arena);
     if(s.length == 0) return "";
 
-    char* cstr = (char*)arena_alloc(arena, s.length + 1);
+    char* cstr = (char*)arena_alloc(arena, s.length + 1, 1);
     memcpy(cstr, s.buffer, s.length);
     cstr[s.length] = '\0';
     return s.buffer;
@@ -65,7 +65,7 @@ string string_append_string(string a, string b, Arena* arena) {
     assert(arena);
 
     u32 new_length = a.length + b.length;
-    char* buffer = arena_alloc(arena, new_length);
+    char* buffer = arena_alloc(arena, new_length, 1);
 
     memcpy(buffer, a.buffer, a.length);
     memcpy(buffer + a.length, b.buffer, b.length);

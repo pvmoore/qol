@@ -7,7 +7,10 @@ pushd .
 cd tests
 
 set INCLUDES=-I..\src
-set WOPTIONS=-Wall -Wextra -pedantic -Wno-unused-variable -Wno-unused-parameter
+
+set WOPTIONS=-Wall -Wextra -pedantic
+set WOPTIONS=%WOPTIONS% -Wno-unused-variable -Wno-unused-parameter -Wno-gnu-empty-struct
+
 set TARGET=-xc -std=c2y -ffast-math --target=x86_64-pc-windows-msvc -mtune=znver3
 
 set OPTIONS=-g %INCLUDES% %WOPTIONS% %TARGET%

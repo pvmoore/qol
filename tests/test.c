@@ -3,6 +3,7 @@
 #include "qstring.h"
 #include "freelist.h"
 
+#include "test_arena.c"
 #include "test_array.c"
 #include "test_u8_array.c"
 #include "test_string_map.c"
@@ -24,49 +25,6 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-void testArena() {
-    printf("Testing Arena...\n");
-    Arena arena = arena_of(1024 * 1024);
-    assert(arena.buffer);
-    assert(arena.pos == 0);
-    assert(arena.capacity == 1024 * 1024);
-
-    void* p1 = arena_alloc(&arena, 10);
-    assert(p1);
-    assert(p1 == arena.buffer);
-    assert(arena.pos == 10);
-    assert(arena.capacity == 1024 * 1024);
-
-    void* p2 = arena_alloc(&arena, 10);
-    assert(p2);
-    assert(p2 == arena.buffer + 10);
-    assert(arena.pos == 20);
-    assert(arena.capacity == 1024 * 1024);
-
-    void* p3 = arena_alloc_aligned(&arena, 10, 16);
-    assert(p3);
-    assert(p3 == arena.buffer + 32);
-    assert(arena.pos == 42);
-    assert(arena.capacity == 1024 * 1024);
-
-    void* p4 = arena_alloc(&arena, 3);
-    assert(p4);
-    assert(p4 == arena.buffer + 42);
-    assert(arena.pos == 45);
-    assert(arena.capacity == 1024 * 1024);
-
-    void* p5 = arena_alloc_aligned(&arena, 4, 4);
-    assert(p5);
-    assert(p5 == arena.buffer + 48);
-    assert(arena.pos == 52);
-    assert(arena.capacity == 1024 * 1024);
-
-    arena_delete(&arena);
-
-    assert(arena.buffer == NULL);
-    assert(arena.pos == 0);
-    assert(arena.capacity == 0);
-}
 void testString() {
     printf("Testing String...\n");
     Arena arena = arena_of(1024 * 1024);

@@ -27,11 +27,13 @@ typedef struct {
     u32* _data;
 } FreeList;
 
+static_assert(sizeof(FreeList) == 24);
+
 //----------------------------------------------------------------------------------
-FreeList freelist_of(u32 size);
-void     freelist_delete(FreeList* f);
-void     freelist_reset(FreeList* f);
-u32      freelist_acquire(FreeList* f);
-void     freelist_release(FreeList* f, u32 index);
+FreeList freelist_of        (u32 size);
+void     freelist_delete    (FreeList* f);
+void     freelist_reset     (FreeList* f);
+u32      freelist_acquire   (FreeList* f);
+void     freelist_release   (FreeList* f, u32 index);
 //----------------------------------------------------------------------------------
 

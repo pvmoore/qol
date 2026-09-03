@@ -2,24 +2,18 @@
 
 #include "qol.h"
 #include "qstring.h"
+#include "arena.h"
 
-//---------------------------------------------------------------------------------- public
+// Opaque struct
+typedef struct {} string_map;
 
-typedef struct {
-    u32 capacity;
-    u32 numKeys;                // Current number of populated keys in the map
-    u32 mask;                   // capacity - 1
-    u32 numKeysThreshold;       // numKeys value which will trigger a rehash
-    float loadFactor;
+string_map* string_map_of           (Arena* arena, u32 capacity, float loadFactor);
 
-    string* keys;               // (length = capacity)
-    u32* flags;                 // Bit flags for key slots. 1 = occupied, 0 = free
-    string* values;             // (length = capacity)
-} string_map;
-
-string_map  string_map_of           (u32 capacity, float loadFactor);
 bool        string_map_is_empty     (string_map* m);
 u32         string_map_size         (string_map* m);
+u32         string_map_capacity     (string_map* m);
+float       string_map_load_factor  (string_map* m);
+
 void        string_map_insert       (string_map* m, string key, string value);
 string*     string_map_get          (string_map* m, string key);
 bool        string_map_contains_key (string_map* m, string key);
