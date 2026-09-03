@@ -1,0 +1,32 @@
+If:
+  PathMatch: [.*\.h, .*\.c]
+  PathExclude: vendor/.*
+
+CompileFlags:
+  Add:
+    - -xc
+    - -std=c2y    # https://clang.llvm.org/c_status.html
+    - -Wall
+    - -Wextra
+    - -Wno-#warnings,no-typecheck_assign_const
+    - -Isrc
+    - -I..\src
+  BuiltinHeaders: QueryDriver
+
+Index:
+  StandardLibrary: true
+
+InlayHints:
+  Enabled: true
+  BlockEnd: false
+  Designators: false
+  ParameterNames: true
+  DeducedTypes: true
+  DefaultArguments: false
+  TypeNameLimit: 24
+
+Documentation:
+  CommentFormat: Markdown
+
+#Diagnostics:
+#  UnusedIncludes: None
