@@ -58,6 +58,14 @@ string_map* string_map_of(Arena* arena, u32 capacity, float loadFactor) {
     return (string_map*)m;
 }
 
+void string_map_delete(string_map* map) {
+    string_map_impl* m = toImpl(map);
+    free(m->keys);
+    free(m->flags);
+    free(m->values);
+    m->numKeys = 0;
+}
+
 bool string_map_is_empty(string_map* m) {
     return ((string_map_impl*)m)->numKeys == 0;
 }
@@ -171,9 +179,10 @@ bool string_map_remove(string_map* map, string key) {
                 setOccupied(m, freeSlot);
                 m->keys[freeSlot] = m->keys[slot];
                 m->values[freeSlot] = m->values[slot];
-                //m->values[slot] = nullptr;
 
                 // This slot is now the new free slot
+                // m->keys[slot] = nullptr;
+                // m->values[slot] = nullptr;
                 setFree(m, slot);
                 freeSlot = slot;
                 distanceFromFreeSlot = 0;

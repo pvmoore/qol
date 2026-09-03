@@ -8,6 +8,7 @@
 typedef struct {} string_map;
 
 string_map* string_map_of           (Arena* arena, u32 capacity, float loadFactor);
+void        string_map_delete       (string_map* m);
 
 bool        string_map_is_empty     (string_map* m);
 u32         string_map_size         (string_map* m);

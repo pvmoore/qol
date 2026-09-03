@@ -6,14 +6,13 @@ Arena arena_of(u32 capacity) {
     return (Arena){ .buffer = calloc(1, capacity), .pos = 0, .capacity = capacity };
 }
 
-/**
- * Returns a const char*  representation of the arena object for debugging.
- * Note: The returned string will be overwritten by subsequent calls.
- */
-const char* arena_getDebugCstr(Arena* arena) {
-    static char buffer[1024];
-    [[maybe_unused]] u32 count = snprintf(buffer, sizeof(buffer), "Arena{ .pos = %u, .capacity = %u }", arena->pos, arena->capacity);
-    return buffer;
+void arena_delete(Arena* arena) {
+    assert(arena);
+
+    free(arena->buffer);
+    arena->buffer = nullptr;
+    arena->pos = 0;
+    arena->capacity = 0;
 }
 
 void* arena_alloc(Arena* arena, u32 size, u32 alignment) {
@@ -31,16 +30,17 @@ void* arena_alloc(Arena* arena, u32 size, u32 alignment) {
     return arena->buffer + start;
 }
 
-void arena_delete(Arena* arena) {
-    assert(arena);
-
-    free(arena->buffer);
-    arena->buffer = nullptr;
-    arena->pos = 0;
-    arena->capacity = 0;
-}
-
 void arena_reset(Arena* arena) {
     memset(arena->buffer, 0, arena->pos);
     arena->pos = 0;
+}
+
+/**
+ * Returns a const char*  representation of the arena object for debugging.
+ * Note: The returned string will be overwritten by subsequent calls.
+ */
+const char* arena_getDebugCstr(Arena* arena) {
+    static char buffer[1024];
+    [[maybe_unused]] u32 count = snprintf(buffer, sizeof(buffer), "Arena{ .pos = %u, .capacity = %u }", arena->pos, arena->capacity);
+    return buffer;
 }

@@ -16,11 +16,11 @@ static_assert(sizeof(Arena) == 16);
  */
 Arena arena_of(u32 capacity);
 
-/** Allocates aligned memory from the arena and returns a pointer to it */
-void* arena_alloc(Arena* arena, u32 size, u32 alignment);
-
 /** Frees the memory allocated by an Arena */
 void arena_delete(Arena* arena);
+
+/** Allocates aligned memory from the arena and returns a pointer to it */
+void* arena_alloc(Arena* arena, u32 size, u32 alignment);
 
 /** Resets the arena. Zeroes out the memory */
 void arena_reset(Arena* arena);
