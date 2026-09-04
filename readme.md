@@ -1,8 +1,9 @@
 # Simple quality of life C library
 
-- String
 - Arena
+- Dynamic array
 - Free list
+- String
 - String map
 
 ## Dependencies

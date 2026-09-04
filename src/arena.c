@@ -25,7 +25,7 @@ void* arena_alloc(Arena* arena, u32 size, u32 alignment) {
     }
     u32 start = arena->pos;
     arena->pos += size;
-    assert(arena->pos <= arena->capacity && "arena_allocate_aligned: Out of Arena memory");
+    assert(arena->pos <= arena->capacity && "arena_allocate: Out of Arena memory");
 
     return arena->buffer + start;
 }

@@ -4,7 +4,7 @@
 #include "qstring.h"
 #include "arena.h"
 
-// Opaque struct
+// Opaque handle
 typedef struct {} string_map;
 
 string_map* string_map_of           (Arena* arena, u32 capacity, float loadFactor);
